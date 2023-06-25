@@ -7,7 +7,7 @@ var separateUsers = require('../shared/globals').separateUsers;
 
 require('dotenv').config();
 
-router.put('/send_message', async(req, res) => {
+router.put('/save_messages', async(req, res) => {
     try {
         const msgList = req.body.messageList;
         const roomId = req.body.roomId;
@@ -18,13 +18,20 @@ router.put('/send_message', async(req, res) => {
             const oldMessages = room.messageList;
             const allMessages = oldMessages.concat(msgList);
             const latestMessage = allMessages[allMessages.length - 1];
+            const oldCount = room.unreadMessages.count;
+            const newCount = oldCount + req.body.unreadMessages.count;
+
+            const newUnreadMessages = {count: newCount, phoneNumber: req.body.unreadMessages.phoneNumber};
 
             await PersonalRoom.updateOne(
                 {roomId: roomId},
-                {messageList: allMessages, lastActive: latestMessage.sendingTime}
-            );      
-            
-            const msg = await updateActiveRooms(roomId, latestMessage);
+                {
+                    messageList: allMessages,
+                    lastActive: latestMessage.sendingTime,
+                    unreadMessages: newUnreadMessages
+                }
+            );
+            const msg = await updateActiveRooms(roomId, latestMessage, newUnreadMessages);
 
             console.log(msg);
 
@@ -33,15 +40,17 @@ router.put('/send_message', async(req, res) => {
         }
         else{
             const latestMessage = msgList[msgList.length - 1];
+            
             const newRoom = new PersonalRoom({
                 roomId: roomId,
                 messageList: msgList,
-                lastActive: latestMessage.sendingTime
+                lastActive: latestMessage.sendingTime,
+                unreadMessages: req.body.unreadMessages
             });
 
             await newRoom.save();
 
-            const msg = await updateActiveRooms(roomId, latestMessage);
+            const msg = await updateActiveRooms(roomId, latestMessage, req.body.unreadMessages);
 
             console.log(msg);
             
@@ -56,11 +65,18 @@ router.put('/send_message', async(req, res) => {
     }
 });
 
-router.get('/of/:roomId', async(req, res) => {
+router.get('/of/:roomId/:myPhoneNumber', async(req, res) => {
     try {
+        const myPhoneNumber = req.params.myPhoneNumber;
         const roomData = await PersonalRoom.findOne({roomId: req.params.roomId});
         if(roomData){
             var msgs = [];
+            if(roomData.unreadMessages.phoneNumber == myPhoneNumber){
+                await PersonalRoom.updateOne(
+                    {roomId: req.params.roomId}, 
+                    {unreadMessages: {count: 0}}
+                );
+            }
             roomData.messageList.forEach(element => {
                 msgs.push({
                     body: element.body,
@@ -68,15 +84,39 @@ router.get('/of/:roomId', async(req, res) => {
                     sendingTime: element.sendingTime
                 });
             });
+
+            const user = await User.findOne({phoneNumber: myPhoneNumber});
+            var newActiveRooms = user.activeRooms;
+            for(i = 0; i < newActiveRooms.length; i++){
+                if(newActiveRooms[i].roomId == roomData.roomId){
+                    newActiveRooms[i].count = 0;
+                }
+            }
+
+            await User.updateOne({phoneNumber: myPhoneNumber}, {activeRooms: newActiveRooms});
+            console.log('active room updated');
+
             res.status(200).json({roomId: roomData.roomId, messageList: msgs});
         }
         else{
-            const newRoom = new PersonalRoom({roomId: req.params.roomId, messageList: []});
+            const newRoom = new PersonalRoom({
+                roomId: req.params.roomId,
+                messageList: [],
+                unreadMessages: {count: 0, phoneNumber: req.params.myPhoneNumber},
+                lastActive: Date.now().toString()
+            });
+
+            console.log(newRoom);
 
             await newRoom.save();
             console.log('New room  added to cloud');
 
-            res.status(200).json({roomId: newRoom.roomId, messageList: newRoom.messageList});
+            res.status(200).json({
+                roomId: newRoom.roomId, 
+                messageList: newRoom.messageList, 
+                lastActive: newRoom.lastActive,
+                unreadMessages: newRoom.unreadMessages
+            });
         }
     }catch(error){
         console.log(error.message);
@@ -84,17 +124,22 @@ router.get('/of/:roomId', async(req, res) => {
     }
 });
 
-async function updateActiveRooms(roomId, latestMessage){
+async function updateActiveRooms(roomId, latestMessage, unreadMessages){
     
     const userPhoneNumbers = separateUsers(roomId);
-
-    await updateForSingleUser(userPhoneNumbers[0], roomId, latestMessage);
-    await updateForSingleUser(userPhoneNumbers[1], roomId, latestMessage);
+    if(unreadMessages.phoneNumber == userPhoneNumbers[0]){
+        await updateForSingleUser(userPhoneNumbers[0], roomId, latestMessage, unreadMessages.count);
+        await updateForSingleUser(userPhoneNumbers[1], roomId, latestMessage, 0);
+    }
+    else{
+        await updateForSingleUser(userPhoneNumbers[0], roomId, latestMessage, 0);
+        await updateForSingleUser(userPhoneNumbers[1], roomId, latestMessage, unreadMessages.count);
+    }
 
     return 'Function completed';
 }
 
-async function updateForSingleUser(userPhoneNumber, roomId, latestMessage){
+async function updateForSingleUser(userPhoneNumber, roomId, latestMessage, count){
     const user = await User.findOne({ phoneNumber: userPhoneNumber });
     if (user) {
         var newActiveRooms = user.activeRooms;
@@ -105,6 +150,7 @@ async function updateForSingleUser(userPhoneNumber, roomId, latestMessage){
             if (newActiveRooms[i].roomId == roomId) {
                 newActiveRooms[i].lastActive = latestMessage.sendingTime;
                 newActiveRooms[i].lastMessage = latestMessage;
+                newActiveRooms[i].count = count;
                 found = true;
             }
         }
@@ -112,7 +158,8 @@ async function updateForSingleUser(userPhoneNumber, roomId, latestMessage){
             newActiveRooms.push({
                 roomId: roomId,
                 lastActive: latestMessage.sendingTime,
-                lastMessage: latestMessage
+                lastMessage: latestMessage,
+                count: count
             });
         }
 

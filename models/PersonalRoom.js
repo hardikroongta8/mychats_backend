@@ -12,7 +12,17 @@ const room = mongoose.Schema({
     lastActive: {
         type: String, 
         required: true
-    }
-})
+    },
+    unreadMessages: {
+        count: {
+            required: true,
+            type: Number
+        },
+        phoneNumber: {
+            required: true,
+            type: String
+        }
+    },
+});
 
 module.exports = mongoose.model('PersonalRoom', room);

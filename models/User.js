@@ -53,6 +53,10 @@ const user = new mongoose.Schema({
             lastMessage: {
                 type: PersonalMessage.schema,
                 required: true
+            },
+            count: {
+                required: true, 
+                type: Number
             }
         }
     ],

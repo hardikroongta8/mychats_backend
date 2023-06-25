@@ -98,7 +98,8 @@ router.get('/active_rooms/:firebaseId', async(req, res) => {
                             displayName: element.displayName,
                             roomId: room.roomId,
                             lastActive: room.lastActive,
-                            lastMessage: room.lastMessage
+                            lastMessage: room.lastMessage,
+                            count: room.count
                         });
                     }
                 });
