@@ -57,8 +57,8 @@ io.on('connection', (socket) => {
         console.log(socket.id + ' disconnected from socket');
     });
 
-    socket.on('findClientsInRoom', (data) => {
-        findClients(data.roomId);
+    socket.on('findClientsInRoom', async(data) => {
+        await findClients(data.roomId);
     });
 
     socket.on('sendMessage', (data) => {
@@ -75,9 +75,6 @@ io.on('connection', (socket) => {
 
     socket.on('refreshView', (data) => {
         const usersPhoneNumbers = separateUsers(data.roomId);
-
-        console.log(usersPhoneNumbers[0]);
-        console.log(usersPhoneNumbers[1]);
 
         io.to(usersPhoneNumbers[0]).emit('refreshView');
         io.to(usersPhoneNumbers[1]).emit('refreshView');

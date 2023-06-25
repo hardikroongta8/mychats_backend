@@ -46,6 +46,24 @@ router.put('/create', async(req, res) => {
     }
 });
 
+router.get('/get_contact_info/:firebaseId', async(req, res) => {
+    try {
+        const user = await User.findOne({firebaseId: req.params.firebaseId});
+
+        if(user){
+            const contactInfo = user.contactInfo;
+            console.log('sent contact info');
+            res.status(200).json({contactInfo: contactInfo});
+        }
+        else{
+            throw new Error('User not found');
+        }
+    }catch(error){
+        console.log(error.message);
+        res.status(500).json(error.message);
+    }
+});
+
 router.put('/update_contact_info', async(req, res) => {
     try{
         await User.updateOne(
