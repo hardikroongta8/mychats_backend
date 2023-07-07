@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+const { authenticateToken } = require('../middlewares/authenticate');
 const PersonalRoom = require('../models/PersonalRoom');
 const User = require('../models/User');
 
@@ -7,7 +8,7 @@ var separateUsers = require('../shared/globals').separateUsers;
 
 require('dotenv').config();
 
-router.put('/save_messages', async(req, res) => {
+router.put('/save_messages', authenticateToken, async(req, res) => {
     try {
         const msgList = req.body.messageList;
         const roomId = req.body.roomId;
@@ -65,7 +66,7 @@ router.put('/save_messages', async(req, res) => {
     }
 });
 
-router.get('/of/:roomId/:myPhoneNumber', async(req, res) => {
+router.get('/of/:roomId/:myPhoneNumber', authenticateToken, async(req, res) => {
     try {
         const myPhoneNumber = req.params.myPhoneNumber;
         const roomData = await PersonalRoom.findOne({roomId: req.params.roomId});

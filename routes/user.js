@@ -1,16 +1,24 @@
 const router = require('express').Router();
+const {
+    createAccessToken, 
+    createRefreshToken,
+    sendTokens,
+} = require('../shared/tokens.js');
+
 var getRoomId = require('../shared/globals').getRoomId;
 
 const User = require('../models/User');
+const { authenticateToken, verifyRefreshToken } = require('../middlewares/authenticate.js');
 
-require('dotenv').config();
 
-router.put('/create', async(req, res) => {
+router.put('/signin', async(req, res) => {
     try{
         const user = req.body;
 
         const olduser = await User.findOne({firebaseId: user.firebaseId});
 
+        const accessToken = createAccessToken(user.firebaseId);
+        const refreshToken = createRefreshToken(user.firebaseId);
 
         if(olduser){
             await User.updateOne(
@@ -19,7 +27,7 @@ router.put('/create', async(req, res) => {
                     phoneNumber: user.phoneNumber,
                     contactInfo: user.contactInfo,
                     about: user.about,
-                    profilePicUrl: user.profilePicUrl
+                    profilePicUrl: user.profilePicUrl,
                 }
             );
             console.log('updated user');
@@ -38,15 +46,30 @@ router.put('/create', async(req, res) => {
             await newUser.save();
             console.log('created user');
         }
-    
-        res.status(200).json(user);
+
+        sendTokens(req, res, {accessToken, refreshToken});
     }catch(error){
         console.log(error.message);
         res.status(500).json(error);
     }
 });
 
-router.get('/get_contact_info/:firebaseId', async(req, res) => {
+router.post('/refresh_token', verifyRefreshToken, async(req, res) => {
+    try{
+        console.log('REFRESH TOKEN ROUTE CALLED BEFORE');
+        const firebaseId = req.firebaseId;
+        console.log('REFRESH TOKEN ROUTE CALLED');
+    
+        const accessToken = createAccessToken(firebaseId);
+        const refreshToken = createRefreshToken(firebaseId);
+
+        res.status(200).json({accessToken: accessToken, refreshToken: refreshToken});
+    }catch(e){
+        res.status(422).json(e.message);
+    }
+});
+
+router.get('/get_contact_info/:firebaseId', authenticateToken, async(req, res) => {
     try {
         const user = await User.findOne({firebaseId: req.params.firebaseId});
 
@@ -64,7 +87,7 @@ router.get('/get_contact_info/:firebaseId', async(req, res) => {
     }
 });
 
-router.put('/update_contact_info', async(req, res) => {
+router.put('/update_contact_info', authenticateToken, async(req, res) => {
     try{
         await User.updateOne(
             {firebaseId: req.body.firebaseId},
@@ -80,7 +103,7 @@ router.put('/update_contact_info', async(req, res) => {
     }
 });
 
-router.get('/active_rooms/:firebaseId', async(req, res) => {
+router.get('/active_rooms/:firebaseId', authenticateToken, async(req, res) => {
     try {
         const user = await User.findOne({firebaseId: req.params.firebaseId});
         
@@ -114,10 +137,8 @@ router.get('/active_rooms/:firebaseId', async(req, res) => {
         }
     }catch(error){
         console.log(error.message);
-        res.status(500).json(error.message);
+        res.status(500).json({message: error.message});
     }
 });
-
-
 
 module.exports = router;

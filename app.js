@@ -1,19 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const userRoute = require('./routes/user');
-const messageRoute = require('./routes/messages');
 
 var separateUsers = require('./shared/globals').separateUsers;
+var app = express();
 
 require("dotenv").config();
 
-var app = express();
-
-// Middlewares
+// MIDDLEWARES
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-// MongoDB
+// DATABASE
 mongoose.connect(
     process.env.MONGO_URL + 'mychats'
 ).then(() => {
@@ -22,17 +19,21 @@ mongoose.connect(
     e => {console.log(e.message);}
 );
 
+// ROUTERS
+const userRoute = require('./routes/user');
+const messageRoute = require('./routes/messages');
 
-// Routes
+
+// ROUTES
 app.use('/user', userRoute);
 app.use('/message', messageRoute);
 
-// Starting the server
+// SERVER CONNECTION
 const server = app.listen(process.env.PORT, () => {
     console.log('Server is running on port ' + (process.env.PORT || 3000));
 });
 
-// Establishing socket connection
+// SOCKET CONNECTION
 const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
@@ -75,6 +76,8 @@ io.on('connection', (socket) => {
 
     socket.on('refreshView', (data) => {
         const usersPhoneNumbers = separateUsers(data.roomId);
+        console.log(usersPhoneNumbers[0]);
+        console.log(usersPhoneNumbers[1]);
 
         io.to(usersPhoneNumbers[0]).emit('refreshView');
         io.to(usersPhoneNumbers[1]).emit('refreshView');
