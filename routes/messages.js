@@ -82,7 +82,8 @@ router.get('/of/:roomId/:myPhoneNumber', authenticateToken, async(req, res) => {
                 msgs.push({
                     body: element.body,
                     sentBy: element.sentBy,
-                    sendingTime: element.sendingTime
+                    sendingTime: element.sendingTime,
+                    isFile: element.isFile
                 });
             });
 

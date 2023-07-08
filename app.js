@@ -1,5 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
 
 var separateUsers = require('./shared/globals').separateUsers;
 var app = express();
@@ -7,6 +9,13 @@ var app = express();
 require("dotenv").config();
 
 // MIDDLEWARES
+app.use(cookieParser());
+app.use(
+    cors({
+        origin: 'http://localhost:'+ (process.env.PORT || 3000),
+        credentials: true
+    })
+);
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
@@ -20,13 +29,15 @@ mongoose.connect(
 );
 
 // ROUTERS
-const userRoute = require('./routes/user');
-const messageRoute = require('./routes/messages');
+const userRouter = require('./routes/user');
+const messageRouter = require('./routes/messages');
+const imageRouter = require('./routes/image');
 
 
 // ROUTES
-app.use('/user', userRoute);
-app.use('/message', messageRoute);
+app.use('/user', userRouter);
+app.use('/message', messageRouter);
+app.use('/image', imageRouter);
 
 // SERVER CONNECTION
 const server = app.listen(process.env.PORT, () => {
@@ -68,6 +79,7 @@ io.on('connection', (socket) => {
         const msg = {
             body: data.body,
             sendingTime: data.sendingTime,
+            isFile: data.isFile,
             sentBy: data.sentBy
         }
 

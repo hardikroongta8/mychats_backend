@@ -12,14 +12,17 @@ const createRefreshToken = firebaseId => {
     return sign(
         {firebaseId: firebaseId}, 
         process.env.REFRESH_TOKEN_SECRET,
-        {expiresIn: '7d'}
+        {expiresIn: '30d'}
     );
 };
 
 const sendTokens = (req, res, {accessToken, refreshToken}) => {
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        path: '/user/refresh_token'
+    });
     res.send({
         accessToken,
-        refreshToken,
         firebaseId: req.firebaseId
     });
 };

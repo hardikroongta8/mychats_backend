@@ -9,6 +9,11 @@ const msg =  new mongoose.Schema({
         type: String,
         required: true
     },
+    isFile: {
+        required: false,
+        default: false,
+        type: Boolean
+    },
     sendingTime: {
         type: String,
         required: false,

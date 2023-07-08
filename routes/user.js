@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const {verify} = require('jsonwebtoken');   
 const {
     createAccessToken, 
     createRefreshToken,
@@ -8,7 +9,7 @@ const {
 var getRoomId = require('../shared/globals').getRoomId;
 
 const User = require('../models/User');
-const { authenticateToken, verifyRefreshToken } = require('../middlewares/authenticate.js');
+const { authenticateToken } = require('../middlewares/authenticate.js');
 
 
 router.put('/signin', async(req, res) => {
@@ -54,18 +55,97 @@ router.put('/signin', async(req, res) => {
     }
 });
 
-router.post('/refresh_token', verifyRefreshToken, async(req, res) => {
+router.post('/refresh_token', async(req, res) => {
     try{
         console.log('REFRESH TOKEN ROUTE CALLED BEFORE');
-        const firebaseId = req.firebaseId;
-        console.log('REFRESH TOKEN ROUTE CALLED');
-    
-        const accessToken = createAccessToken(firebaseId);
-        const refreshToken = createRefreshToken(firebaseId);
 
-        res.status(200).json({accessToken: accessToken, refreshToken: refreshToken});
+        const token = req.cookies.refreshToken;
+        console.log(token);
+
+        if(!token)return res.status(440).json({message: 'No request token'});
+
+        var firebaseId = null;
+
+        verify(token, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+            if(err){
+                console.log('ERROR IN VERIFICATION');
+                console.log(err.message);
+                return res.status(440).json({message: 'Refresh token expired. Login again!'})
+            }
+            console.log(user.firebaseId);
+            firebaseId = user.firebaseId;
+            console.log('REFRESH TOKEN ROUTE CALLED');
+    
+            const accessToken = createAccessToken(firebaseId);
+
+            res.status(200).json({accessToken: accessToken});
+        });
     }catch(e){
-        res.status(422).json(e.message);
+        res.status(440).json(e.message);
+    }
+});
+
+router.get('/get_user_info/:phoneNumber', authenticateToken, async(req, res) => {
+    const phoneNumber = req.params.phoneNumber;
+
+    try {
+        const user = await User.findOne({phoneNumber: phoneNumber});
+
+        if(user){
+            res.status(200).json({
+                phoneNumber: user.phoneNumber,
+                about: user.about,
+                profilePicUrl: user.profilePicUrl,
+            });
+        }else{
+            res.status(200).json({
+                phoneNumber: phoneNumber,
+                about: null,
+                profilePicUrl: null
+            });
+        }
+    }catch(error){
+        res.status(500).json({message: error.message});
+    }
+});
+
+router.get('/get_user_dp/:phoneNumber', authenticateToken, async(req, res) => {
+    const phoneNumber = req.params.phoneNumber;
+
+    try {
+        const user = await User.findOne({phoneNumber: phoneNumber});
+
+        if(user){
+            res.status(200).json({
+                profilePicUrl: user.profilePicUrl,
+            });
+        }else{
+            res.status(200).json({
+                profilePicUrl: null
+            });
+        }
+    }catch(error){
+        res.status(500).json({message: error.message});
+    }
+});
+
+router.get('/get_user_about/:phoneNumber', authenticateToken, async(req, res) => {
+    const phoneNumber = req.params.phoneNumber;
+
+    try {
+        const user = await User.findOne({phoneNumber: phoneNumber});
+
+        if(user){
+            res.status(200).json({
+                about: user.about,
+            });
+        }else{
+            res.status(200).json({
+                about: null,
+            });
+        }
+    }catch(error){
+        res.status(500).json({message: error.message});
     }
 });
 
