@@ -60,7 +60,6 @@ router.post('/refresh_token', async(req, res) => {
         console.log('REFRESH TOKEN ROUTE CALLED BEFORE');
 
         const token = req.cookies.refreshToken;
-        console.log(token);
 
         if(!token)return res.status(440).json({message: 'No request token'});
 

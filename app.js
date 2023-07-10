@@ -73,9 +73,11 @@ io.on('connection', (socket) => {
         await findClients(data.roomId);
     });
 
-    socket.on('sendMessage', (data) => {
-        console.log(data);
+    socket.on('typing', (data) => {
+        socket.broadcast.to(data.roomId).emit('typing');
+    })
 
+    socket.on('sendMessage', (data) => {
         const msg = {
             body: data.body,
             sendingTime: data.sendingTime,
