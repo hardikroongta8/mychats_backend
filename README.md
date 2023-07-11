@@ -19,10 +19,12 @@ The client application for MyChats is built using [Flutter](https://flutter.dev/
 1. Clone this repository to your local machine or download the source code.
 2. Open a terminal and navigate to the project's root directory.
 3. Install the dependencies by running the following command:
+
    ```
    npm install
    ```
 4. Once the dependencies are installed, you can start the server using the following command:
+   
    ```
    npm start
    ```
