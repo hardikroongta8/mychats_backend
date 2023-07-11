@@ -42,7 +42,7 @@ The server can be configured through environment variables. The following variab
 You can set these environment variables in a `.env` file in the project's root directory.
 
 ## API Endpoints
-Please refer to the source code or API documentation for detailed request and response formats.
+Please refer to the source code or [API documentation](https://documenter.getpostman.com/view/21951680/2s93zH1eJB) for detailed request and response formats.
 
 ## Dependencies
 The main dependencies used in this project are:
