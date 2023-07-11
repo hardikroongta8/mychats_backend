@@ -12,6 +12,9 @@ MyChats is an Express.js server application that provides a platform for real-ti
 - Emojis and image attachments
 - User profile management
 
+## Client Application
+The client application for MyChats is built using [Flutter](https://flutter.dev/) framework and can be found in the [mychats_client](https://github.com/hardikroongta8/mychats_client) repository.
+
 ## Getting Started
 1. Clone this repository to your local machine or download the source code.
 2. Open a terminal and navigate to the project's root directory.
