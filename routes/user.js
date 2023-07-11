@@ -7,6 +7,7 @@ const {
 } = require('../shared/tokens.js');
 
 var getRoomId = require('../shared/globals').getRoomId;
+var separateUsers = require('../shared/globals').separateUsers;
 
 const User = require('../models/User');
 const { authenticateToken } = require('../middlewares/authenticate.js');
@@ -191,8 +192,10 @@ router.get('/active_rooms/:firebaseId', authenticateToken, async(req, res) => {
             const contactInfo = user.contactInfo;
 
             var roomList = [];
+            var found = false;
 
             activeRooms.forEach(room => {
+                found = false;
                 contactInfo.forEach(element => {
                     if(room.roomId == getRoomId(element.phoneNumber, user.phoneNumber)){
                         roomList.push({
@@ -203,8 +206,23 @@ router.get('/active_rooms/:firebaseId', authenticateToken, async(req, res) => {
                             lastMessage: room.lastMessage,
                             count: room.count
                         });
+                        found = true;
                     }
                 });
+                if(found == false){
+                    var users = separateUsers(room.roomId);
+                    var otherUserNumber;
+                    if(users[0] == user.phoneNumber)otherUserNumber = users[1];
+                    else otherUserNumber = user[0];
+                    roomList.push({
+                        phoneNumber: otherUserNumber,
+                        displayName: otherUserNumber,
+                        roomId: room.roomId,
+                        lastActive: room.lastActive,
+                        lastMessage: room.lastMessage,
+                        count: room.count                        
+                    });
+                }
             });
 
             console.log('Sent active rooms');
