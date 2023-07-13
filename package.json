@@ -2,9 +2,9 @@
   "name": "mychats",
   "version": "1.0.0",
   "description": "backend for mychats",
-  "main": "app.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Hardik Roongta",
@@ -23,5 +23,8 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": "18"
   }
 }
