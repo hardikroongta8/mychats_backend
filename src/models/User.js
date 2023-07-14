@@ -27,7 +27,7 @@ const user = new mongoose.Schema({
     contactInfo: [
         {
             phoneNumber: {
-                type: String, //phone number
+                type: String,
                 required: true
             },
             displayName: {
@@ -62,7 +62,7 @@ const user = new mongoose.Schema({
     ],
     groups: [
         {
-            type: String, //Group id
+            type: String,
             required: true,
         }
     ]
