@@ -1,0 +1,15 @@
+services:
+  mychats_mongodb:
+    ports:
+      - "27017:27017"
+    image: mongo:latest
+    volumes:
+      - mongodb-data:/data/db
+  mychats_server:
+    env_file:
+      - .env
+    build: ./
+    ports:
+      - "8080:8080"
+volumes:
+  mongodb-data:

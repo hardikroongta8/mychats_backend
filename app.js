@@ -21,7 +21,7 @@ app.use(express.urlencoded({extended: true}));
 
 // DATABASE
 mongoose.connect(
-    process.env.MONGO_URL + 'mychats'
+    process.env.MONGO_URL, {}
 ).then(() => {
     console.log('Connected to MongoDB');
 }).catch(
